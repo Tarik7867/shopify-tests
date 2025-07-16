@@ -1,0 +1,104 @@
+{% comment %}
+Тестове завдання:
+- Swiper-галерея для фото продукту
+- Фільтрація фото за кольором без перезавантаження
+- Налаштування кількості слайдів, пагінації, стрілок, відступів через schema
+- Accordion з метафілдів продукту
+{% endcomment %}
+
+<!-- Підключення Swiper -->
+<link rel="stylesheet" href="https://unpkg.com/swiper/swiper-bundle.min.css" />
+<script src="https://unpkg.com/swiper/swiper-bundle.min.js"></script>
+
+<div id="product-swiper-wrapper">
+  <div class="swiper mySwiper">
+    <div class="swiper-wrapper">
+      {% for image in product.images %}
+        <div class="swiper-slide" data-color="{{ image.alt | downcase }}">
+          <img src="{{ image | image_url: width: 800 }}" alt="{{ image.alt }}" loading="lazy" />
+        </div>
+      {% endfor %}
+    </div>
+    {% if section.settings.pagination %}
+      <div class="swiper-pagination"></div>
+    {% endif %}
+    {% if section.settings.navigation %}
+      <div class="swiper-button-next"></div>
+      <div class="swiper-button-prev"></div>
+    {% endif %}
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const swiper = new Swiper('.mySwiper', {
+    slidesPerView: {{ section.settings.slides_per_view }},
+    spaceBetween: {{ section.settings.space_between }},
+    pagination: {
+      el: '.swiper-pagination',
+      clickable: true,
+    },
+    navigation: {
+      nextEl: '.swiper-button-next',
+      prevEl: '.swiper-button-prev',
+    },
+  });
+
+  // Фільтрація за кольором
+  document.querySelectorAll('input[name="options[Color]"]').forEach((radio) => {
+    radio.addEventListener('change', (e) => {
+      const color = e.target.value.toLowerCase();
+      document.querySelectorAll('.swiper-slide').forEach((slide) => {
+        slide.style.display = slide.dataset.color.includes(color) ? 'block' : 'none';
+      });
+      swiper.update();
+    });
+  });
+});
+</script>
+
+{% comment %} ACCORDION {% endcomment %}
+{% if product.metafields.custom.accordion_title and product.metafields.custom.accordion_content %}
+  <details>
+    <summary>{{ product.metafields.custom.accordion_title.value }}</summary>
+    <div>{{ product.metafields.custom.accordion_content.value }}</div>
+  </details>
+{% endif %}
+
+{% schema %}
+{
+  "name": "Product Swiper Gallery",
+  "settings": [
+    {
+      "type": "number",
+      "id": "slides_per_view",
+      "label": "Slides per view",
+      "default": 1
+    },
+    {
+      "type": "number",
+      "id": "space_between",
+      "label": "Space between slides (px)",
+      "default": 10
+    },
+    {
+      "type": "checkbox",
+      "id": "pagination",
+      "label": "Enable pagination",
+      "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "navigation",
+      "label": "Enable navigation arrows",
+      "default": true
+    }
+  ],
+  "presets": [
+    {
+      "name": "Product Swiper Gallery",
+      "category": "Product"
+    }
+  ]
+}
+{% endschema %}
